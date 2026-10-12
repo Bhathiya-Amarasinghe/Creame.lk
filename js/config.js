@@ -4,44 +4,87 @@
 
 const CREAME_CONFIG = {
 
-  // WhatsApp number in international format without + or spaces
-  // Example Sri Lanka: 94771234567
   whatsappNumber: "94XXXXXXXXX",
 
-  // WhatsApp default message (shown pre-filled when customer taps Order)
-  whatsappMessage: "Hi! I'd like to place a cake order. 🎂",
-
-  // ── Google Sheets CSV URL ──────────────────────────────
-  // HOW TO SET UP:
-  //  1. Open your Google Sheet
-  //  2. File → Share → Publish to web
-  //  3. Choose "Sheet1" and "Comma-separated values (.csv)"
-  //  4. Click Publish and copy the URL
-  //  5. Paste it below
   googleSheetCSV: "https://docs.google.com/spreadsheets/d/12OyI-FI0gGY2lQn12NJAVI_xHFQM9LyVWOEF_hgQnn8/export?format=csv&gid=0",
 
-  // ── Cake Images ───────────────────────────────────────
-  // Map each cake name (lowercase, trimmed) to an image path.
-  // Add new cakes here when you upload new images to the server.
+  // Per-size images for each cake.
+  // Keys: default (1kg/500g), bento, mini, cupcake, slice
+  // If a size key is missing, falls back to "default".
   cakeImages: {
-    "butter cake (normal cake)":     "images/1 kg cakes/Buttercake.jpg",
-    "ribbon cake":                   "images/1 kg cakes/Ribbon cake.jpg",
-    "chocolate cake":                "images/1 kg cakes/Chocolate cake.jpg",
-    "tres leches":                   "images/1 kg cakes/Tres leches.jpg",
-    "red velvet":                    "images/1 kg cakes/Red velvet cake.jpg",
-    "cheesecake":                    "images/1 kg cakes/Cheesecake.jpg",
-    "chocolate fudge cake":          "images/1 kg cakes/Chocolate fudge cake.jpg",
-    "pineapple upright cake":        "images/1 kg cakes/Pineapple upright cake.jpg",
-    "pineapple gateau cake":         "images/1 kg cakes/Pineapple gateau.jpg",
-    "lemon cake":                    "images/1 kg cakes/Lemon cake.jpg",
-    "birthday cake":                 "images/1 kg cakes/Birthday cake.jpg",
+    "butter cake (normal cake)": {
+      default: "images/1 kg cakes/Buttercake.jpg",
+      bento:   "images/Bento cakes/Buttercake.jpg",
+      mini:    "images/Mini cakes/Buttercake.jpg",
+      cupcake: "images/Cupcakes/Buttercake.jpg",
+      slice:   "images/Cake slices/Buttercake.jpg",
+    },
+    "ribbon cake": {
+      default: "images/1 kg cakes/Ribbon cake.jpg",
+      bento:   "images/Bento cakes/Ribbon cake.jpg",
+      mini:    "images/Mini cakes/Ribbon cake.jpg",
+      cupcake: "images/Cupcakes/Ribbon cake.jpg",
+      slice:   "images/Cake slices/Ribbon cake.jpg",
+    },
+    "chocolate cake": {
+      default: "images/1 kg cakes/Chocolate cake.jpg",
+      bento:   "images/Bento cakes/Chocolate cake.jpg",
+      mini:    "images/Mini cakes/Chocolate cake.jpg",
+      cupcake: "images/Cupcakes/Chocolate cake.jpg",
+      slice:   "images/Cake slices/Chocolate cake.jpg",
+    },
+    "tres leches": {
+      default: "images/1 kg cakes/Tres leches.jpg",
+      bento:   "images/Bento cakes/Tres leches.jpg",
+      mini:    "images/Mini cakes/Tres leches.jpg",
+      cupcake: "images/Cupcakes/Tres leches.jpg",
+      slice:   "images/Cake slices/Tres leches.jpg",
+    },
+    "red velvet": {
+      default: "images/1 kg cakes/Red velvet cake.jpg",
+      bento:   "images/Bento cakes/Red velvet cake.jpg",
+      mini:    "images/Mini cakes/Red velvet.jpg",
+      cupcake: "images/Cupcakes/Red velvet cake.jpg",
+      slice:   "images/Cake slices/Red velvet.jpg",
+    },
+    "cheesecake": {
+      default: "images/1 kg cakes/Cheesecake.jpg",
+      bento:   "images/Bento cakes/Cheesecake.jpg",
+      mini:    "images/Mini cakes/Cheesecake.jpg",
+      slice:   "images/Cake slices/Cheesecake.jpg",
+    },
+    "chocolate fudge cake": {
+      default: "images/1 kg cakes/Chocolate fudge cake.jpg",
+      bento:   "images/Bento cakes/Chocolate fudge cake.jpg",
+      mini:    "images/Mini cakes/Chocolate fudge cake.jpg",
+      slice:   "images/Cake slices/Chocolate fudge cake.jpg",
+    },
+    "pineapple upright cake": {
+      default: "images/1 kg cakes/Pineapple upright cake.jpg",
+      bento:   "images/Bento cakes/Pineapple upright cake.jpg",
+      mini:    "images/Mini cakes/Pineapple upright cake.jpg",
+      slice:   "images/Cake slices/Pineapple upright cake.jpg",
+    },
+    "pineapple gateau cake": {
+      default: "images/1 kg cakes/Pineapple gateau.jpg",
+      bento:   "images/Bento cakes/Pineapple gateau cake.jpg",
+      mini:    "images/Mini cakes/Pineapple gateau cake.jpg",
+      slice:   "images/Cake slices/Pineapple gateau cake.jpg",
+    },
+    "lemon cake": {
+      default: "images/1 kg cakes/Lemon cake.jpg",
+      bento:   "images/Bento cakes/Lemon cake.jpg",
+      mini:    "images/Mini cakes/Lemon cake.jpg",
+      slice:   "images/Cake slices/Lemon cake.jpg",
+    },
+    "birthday cake": {
+      default: "images/1 kg cakes/Birthday cake.jpg",
+      bento:   "images/Bento cakes/Birthday cake.jpg",
+    },
   },
 
-  // Fallback image when no image is found for a cake
   fallbackImage: "images/1 kg cakes/Buttercake.jpg",
 
-  // ── Cake Descriptions ─────────────────────────────────
-  // Descriptions shown on each cake card. Update freely.
   cakeDescriptions: {
     "butter cake (normal cake)":  "A soft, fluffy vanilla cake topped with smooth, creamy frosting.",
     "ribbon cake":                "A delightful, colorful layered cake with beautiful pink and green colour combination.",
@@ -55,4 +98,18 @@ const CREAME_CONFIG = {
     "lemon cake":                 "A refreshing lemon-flavored cake with creamy frosting and a delicate citrus touch.",
     "birthday cake":              "A beautifully decorated cake with smooth frosting and festive birthday details.",
   },
+
+  toppings: [
+    { name: "Vanilla",      img: "images/Toppings/Whipped cream.jpg" },
+    { name: "Nutella",      img: "images/Toppings/Nutella.jpg" },
+    { name: "Oreo",         img: "images/Toppings/Oreo.jpg" },
+    { name: "Mixed Fruit",  img: "images/Toppings/Mixed fruit.jpg" },
+    { name: "Green Grapes", img: "images/Toppings/Green grapes.jpg" },
+    { name: "Pineapple",    img: "images/Toppings/Pineapple.jpg" },
+    { name: "Coconut",      img: "images/Toppings/Coconut.jpg" },
+    { name: "Blueberry",    img: "images/Toppings/Blueberries.jpg" },
+    { name: "Cherry",       img: "images/Toppings/Cherries.jpg" },
+    { name: "Strawberry",   img: "images/Toppings/Strawberries.jpg" },
+    { name: "Nuts",         img: "images/Toppings/Nuts.jpg" },
+  ],
 };

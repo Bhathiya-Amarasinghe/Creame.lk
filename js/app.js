@@ -1,39 +1,48 @@
 // ─────────────────────────────────────────────────────────
-//  CREAME – Catalogue data loader & renderer
+//  CREAME – Catalogue loader, renderer & order modal
 // ─────────────────────────────────────────────────────────
 
 const WA_BASE = `https://wa.me/${CREAME_CONFIG.whatsappNumber}`;
 
-function waLink(cakeName, size, icing) {
-  const icingLabel = icing === "with" ? "with icing" : "without icing";
-  const msg = encodeURIComponent(
-    `Hi Creamé! I'd like to order:\n🎂 *${cakeName}* (${size}, ${icingLabel})\n\nPlease let me know the availability and delivery details. Thank you!`
-  );
-  return `${WA_BASE}?text=${msg}`;
-}
+// Map size key → image key in cakeImages
+const SIZE_IMG_KEY = {
+  "1kg": "default", "500g": "default", "all": "default",
+  "bento": "bento", "mini": "mini",
+  "cupcake": "cupcake", "quarter": "slice", "piece": "slice",
+};
 
-function getImage(cakeName) {
+function getImage(cakeName, sizeKey = "all") {
   const key = cakeName.trim().toLowerCase();
-  return CREAME_CONFIG.cakeImages[key] || CREAME_CONFIG.fallbackImage;
+  const map = CREAME_CONFIG.cakeImages[key];
+  if (!map) return CREAME_CONFIG.fallbackImage;
+  const imgKey = SIZE_IMG_KEY[sizeKey] || "default";
+  return map[imgKey] || map.default || CREAME_CONFIG.fallbackImage;
 }
 
 function getDescription(cakeName) {
-  const key = cakeName.trim().toLowerCase();
-  return CREAME_CONFIG.cakeDescriptions[key] || "A delicious handcrafted cake made fresh to order.";
+  return CREAME_CONFIG.cakeDescriptions[cakeName.trim().toLowerCase()]
+    || "A delicious handcrafted cake made fresh to order.";
 }
 
-// ── CSV Parser ────────────────────────────────────────────
+function lowestPrice(cake) {
+  for (const s of Object.values(cake.sizes)) {
+    const p = s.withoutIcing !== "-" ? s.withoutIcing : s.withIcing;
+    if (p && p !== "-") return p;
+  }
+  return null;
+}
+
+// ── CSV Parser ─────────────────────────────────────────────
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/);
   const rows = [];
-  for (const line of lines) {
+  for (const line of text.split(/\r?\n/)) {
     const cells = [];
-    let inQuote = false, cell = "";
+    let inQ = false, cell = "";
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
       if (ch === '"' && line[i + 1] === '"') { cell += '"'; i++; }
-      else if (ch === '"') { inQuote = !inQuote; }
-      else if (ch === ',' && !inQuote) { cells.push(cell.trim()); cell = ""; }
+      else if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cells.push(cell.trim()); cell = ""; }
       else { cell += ch; }
     }
     cells.push(cell.trim());
@@ -42,93 +51,66 @@ function parseCSV(text) {
   return rows;
 }
 
-// ── Data Model ────────────────────────────────────────────
-// sizes: { "1kg": {withoutIcing, withIcing}, "500g": {...}, ... }
+// ── Build cake data map ────────────────────────────────────
 function buildCakeMap(rows) {
   const cakes = {};
-
-  // Find header rows for each size block by looking for "Cake type" header cells
-  // Layout: 1kg (cols 0-2), 500g (cols 4-6), Bento (cols 8-10)
-  //         Mini (cols 0-2), Cupcake (cols 4-6), Cake pieces (cols 8-12)
-  // We find block starts by scanning for "1 kg cake prices", "500 g cake prices", etc.
-
-  let blocks = {}; // label → { colStart, sizeKey }
+  const blocks = {};
 
   for (let r = 0; r < rows.length; r++) {
-    const row = rows[r];
-    for (let c = 0; c < row.length; c++) {
-      const cell = row[c].toLowerCase();
-      if (cell.includes("1 kg cake prices"))    blocks["1kg"]     = { colStart: c, dataStart: r + 2 };
-      if (cell.includes("500 g cake prices"))   blocks["500g"]    = { colStart: c, dataStart: r + 2 };
-      if (cell.includes("bento cake prices"))   blocks["bento"]   = { colStart: c, dataStart: r + 2 };
-      if (cell.includes("mini cake prices"))    blocks["mini"]    = { colStart: c, dataStart: r + 2 };
-      if (cell.includes("cupcake prices"))      blocks["cupcake"] = { colStart: c, dataStart: r + 2 };
-      if (cell.includes("cake pieces prices"))  blocks["slice"]   = { colStart: c, dataStart: r + 2 };
+    for (let c = 0; c < rows[r].length; c++) {
+      const cell = rows[r][c].toLowerCase();
+      if (cell.includes("1 kg cake prices"))   blocks["1kg"]     = { c, r: r + 2 };
+      if (cell.includes("500 g cake prices"))  blocks["500g"]    = { c, r: r + 2 };
+      if (cell.includes("bento cake prices"))  blocks["bento"]   = { c, r: r + 2 };
+      if (cell.includes("mini cake prices"))   blocks["mini"]    = { c, r: r + 2 };
+      if (cell.includes("cupcake prices"))     blocks["cupcake"] = { c, r: r + 2 };
+      if (cell.includes("cake pieces prices")) blocks["slice"]   = { c, r: r + 2 };
     }
   }
 
-  // For each block read rows until we hit an empty cake name cell
   const sizeLabels = {
-    "1kg":     "1 kg",
-    "500g":    "500 g",
-    "bento":   "Bento",
-    "mini":    "Mini",
-    "cupcake": "Cupcake",
-    "slice":   "Cake Slice",
+    "1kg": "1 kg", "500g": "500 g", "bento": "Bento",
+    "mini": "Mini", "cupcake": "Cupcake",
+    "quarter": "Quarter Slab", "piece": "1 Piece",
   };
 
-  for (const [sizeKey, block] of Object.entries(blocks)) {
-    const { colStart, dataStart } = block;
+  for (const [sizeKey, { c, r: dataStart }] of Object.entries(blocks)) {
     for (let r = dataStart; r < rows.length; r++) {
-      const row = rows[r];
-      const name = row[colStart];
-      if (!name || name === "") break;
-
+      const name = rows[r][c];
+      if (!name) break;
       const key = name.trim().toLowerCase();
-      if (!cakes[key]) {
-        cakes[key] = { name: name.trim(), sizes: {} };
-      }
+      if (!cakes[key]) cakes[key] = { name: name.trim(), sizes: {} };
 
       if (sizeKey === "slice") {
-        // Cake pieces: Quarter (cols +1,+2) and 1 piece (cols +3,+4)
-        // Row after header has: Without icing, With icing, Without icing, With icing
-        const quarterNoIcing = row[colStart + 1] || "-";
-        const quarterIcing   = row[colStart + 2] || "-";
-        const pieceNoIcing   = row[colStart + 3] || "-";
-        const pieceIcing     = row[colStart + 4] || "-";
         cakes[key].sizes["quarter"] = {
-          label: "Quarter Slab",
-          withoutIcing: quarterNoIcing,
-          withIcing: quarterIcing,
+          label: sizeLabels["quarter"],
+          withoutIcing: rows[r][c + 1] || "-",
+          withIcing:    rows[r][c + 2] || "-",
         };
         cakes[key].sizes["piece"] = {
-          label: "1 Piece",
-          withoutIcing: pieceNoIcing,
-          withIcing: pieceIcing,
+          label: sizeLabels["piece"],
+          withoutIcing: rows[r][c + 3] || "-",
+          withIcing:    rows[r][c + 4] || "-",
         };
       } else {
-        const withoutIcing = row[colStart + 1] || "-";
-        const withIcing    = row[colStart + 2] || "-";
         cakes[key].sizes[sizeKey] = {
           label: sizeLabels[sizeKey],
-          withoutIcing,
-          withIcing,
+          withoutIcing: rows[r][c + 1] || "-",
+          withIcing:    rows[r][c + 2] || "-",
         };
       }
     }
   }
-
   return cakes;
 }
 
-// ── Render ────────────────────────────────────────────────
+// ── Catalogue cards ────────────────────────────────────────
 let allCakes = {};
 let activeSize = "all";
 
 function renderCatalogueCards(sizeFilter) {
   const grid = document.getElementById("catalogueGrid");
   if (!grid) return;
-
   grid.innerHTML = "";
   let count = 0;
 
@@ -136,52 +118,28 @@ function renderCatalogueCards(sizeFilter) {
     const sizesToShow = sizeFilter === "all"
       ? Object.entries(cake.sizes)
       : Object.entries(cake.sizes).filter(([k]) => k === sizeFilter);
-
     if (sizesToShow.length === 0) continue;
 
-    const img = getImage(cake.name);
+    // Image matches the active size filter
+    const imgSizeKey = sizeFilter === "all" ? "all" : sizesToShow[0][0];
+    const img  = getImage(cake.name, imgSizeKey);
     const desc = getDescription(cake.name);
-
-    const priceRows = sizesToShow.map(([sizeKey, s]) => {
-      const noIcingCell = s.withoutIcing && s.withoutIcing !== "-"
-        ? `<a href="${waLink(cake.name, s.label, "without")}" target="_blank" class="price-link">
-             <span class="price-amount">${s.withoutIcing}</span>
-             <span class="price-tag">No Icing</span>
-           </a>`
-        : `<span class="price-na">–</span>`;
-
-      const withIcingCell = s.withIcing && s.withIcing !== "-"
-        ? `<a href="${waLink(cake.name, s.label, "with")}" target="_blank" class="price-link price-link--icing">
-             <span class="price-amount">${s.withIcing}</span>
-             <span class="price-tag">With Icing</span>
-           </a>`
-        : `<span class="price-na">–</span>`;
-
-      return `
-        <div class="price-row">
-          <span class="size-badge">${s.label}</span>
-          <div class="price-options">
-            ${noIcingCell}
-            ${withIcingCell}
-          </div>
-        </div>`;
-    }).join("");
+    const from = lowestPrice(cake);
+    const key  = cake.name.trim().toLowerCase();
 
     grid.innerHTML += `
       <div class="cake-card">
         <div class="cake-img-wrap">
-          <img src="${img}" alt="${cake.name}" loading="lazy" onerror="this.src='${CREAME_CONFIG.fallbackImage}'" />
-          <div class="cake-img-overlay">
-            <a href="${waLink(cake.name, "your preferred size", "with")}" target="_blank" class="btn-order-overlay">Order Now</a>
-          </div>
+          <img src="${img}" alt="${cake.name}" loading="lazy"
+               onerror="this.src='${CREAME_CONFIG.fallbackImage}'" />
         </div>
         <div class="cake-body">
           <h3 class="cake-name">${cake.name}</h3>
           <p class="cake-desc">${desc}</p>
-          <div class="cake-prices">
-            ${priceRows}
-          </div>
-          <p class="price-note">* Tap a price to order via WhatsApp</p>
+          ${from ? `<p class="from-price">From <strong>${from}</strong></p>` : ""}
+          <button class="btn-customize" onclick="openOrderModal('${key}')">
+            Customize &amp; Order
+          </button>
         </div>
       </div>`;
     count++;
@@ -192,7 +150,131 @@ function renderCatalogueCards(sizeFilter) {
   }
 }
 
-// ── Filter tabs ───────────────────────────────────────────
+// ── Order Modal ────────────────────────────────────────────
+function openOrderModal(cakeKey) {
+  const cake = allCakes[cakeKey];
+  if (!cake) return;
+
+  const modal     = document.getElementById("orderModal");
+  const sizes     = Object.entries(cake.sizes);
+  const firstSize = sizes[0];
+
+  // Reset state
+  modal.dataset.cakeKey = cakeKey;
+  document.getElementById("modalCakeName").textContent = cake.name;
+  document.getElementById("modalCakeDesc").textContent = getDescription(cake.name);
+  document.getElementById("modalNotes").value = "";
+  document.querySelectorAll(".topping-sel").forEach(t => t.classList.remove("selected"));
+
+  // Size options
+  const sizeWrap = document.getElementById("modalSizes");
+  sizeWrap.innerHTML = sizes.map(([k, s], i) => `
+    <button class="size-opt ${i === 0 ? "active" : ""}"
+            data-size-key="${k}" data-label="${s.label}"
+            data-no-icing="${s.withoutIcing}" data-with-icing="${s.withIcing}"
+            onclick="selectSize(this)">
+      ${s.label}
+    </button>`).join("");
+
+  // Icing + price (from first size)
+  updateIcingPanel(firstSize[0], firstSize[1]);
+
+  // Modal image
+  const imgKey = SIZE_IMG_KEY[firstSize[0]] || "default";
+  const imgMap = CREAME_CONFIG.cakeImages[cakeKey];
+  document.getElementById("modalImg").src = imgMap
+    ? (imgMap[imgKey] || imgMap.default || CREAME_CONFIG.fallbackImage)
+    : CREAME_CONFIG.fallbackImage;
+
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function selectSize(btn) {
+  document.querySelectorAll(".size-opt").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  const sizeKey    = btn.dataset.sizeKey;
+  const label      = btn.dataset.label;
+  const noIcing    = btn.dataset.noIcing;
+  const withIcing  = btn.dataset.withIcing;
+
+  updateIcingPanel(sizeKey, { label, withoutIcing: noIcing, withIcing });
+
+  // Update modal image
+  const cakeKey = document.getElementById("orderModal").dataset.cakeKey;
+  const imgMap  = CREAME_CONFIG.cakeImages[cakeKey];
+  const imgKey  = SIZE_IMG_KEY[sizeKey] || "default";
+  if (imgMap) {
+    document.getElementById("modalImg").src = imgMap[imgKey] || imgMap.default || CREAME_CONFIG.fallbackImage;
+  }
+}
+
+function updateIcingPanel(sizeKey, s) {
+  const wrap = document.getElementById("modalIcing");
+  const hasNo   = s.withoutIcing && s.withoutIcing !== "-";
+  const hasWith = s.withIcing    && s.withIcing    !== "-";
+
+  wrap.innerHTML = `
+    ${hasNo ? `
+      <button class="icing-opt ${!hasWith ? "active" : ""}" data-icing="without" data-price="${s.withoutIcing}" onclick="selectIcing(this)">
+        <span class="icing-label">Without Icing</span>
+        <span class="icing-price">${s.withoutIcing}</span>
+      </button>` : ""}
+    ${hasWith ? `
+      <button class="icing-opt active" data-icing="with" data-price="${s.withIcing}" onclick="selectIcing(this)">
+        <span class="icing-label">With Icing</span>
+        <span class="icing-price">${s.withIcing}</span>
+      </button>` : ""}`;
+
+  // Keep only one active
+  const opts = wrap.querySelectorAll(".icing-opt");
+  if (opts.length > 0) {
+    opts.forEach(o => o.classList.remove("active"));
+    opts[opts.length - 1].classList.add("active");
+  }
+}
+
+function selectIcing(btn) {
+  document.querySelectorAll(".icing-opt").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function closeOrderModal() {
+  document.getElementById("orderModal").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function sendWhatsAppOrder() {
+  const cakeKey  = document.getElementById("orderModal").dataset.cakeKey;
+  const cake     = allCakes[cakeKey];
+  const sizeBtn  = document.querySelector(".size-opt.active");
+  const icingBtn = document.querySelector(".icing-opt.active");
+  const notes    = document.getElementById("modalNotes").value.trim();
+
+  const selectedToppings = [...document.querySelectorAll(".topping-sel.selected")]
+    .map(t => t.dataset.name);
+
+  const sizeLabel  = sizeBtn  ? sizeBtn.dataset.label  : "—";
+  const icingLabel = icingBtn ? (icingBtn.dataset.icing === "with" ? "With Icing" : "Without Icing") : "—";
+  const price      = icingBtn ? icingBtn.dataset.price  : "—";
+
+  let msg = `Hi Creamé! 🎂 I'd like to place an order:\n\n`;
+  msg += `🍰 *Cake:* ${cake.name}\n`;
+  msg += `📦 *Size:* ${sizeLabel}\n`;
+  msg += `🧁 *Icing:* ${icingLabel}\n`;
+  if (selectedToppings.length > 0) {
+    msg += `🍓 *Toppings:* ${selectedToppings.join(", ")}\n`;
+  }
+  if (notes) {
+    msg += `📝 *Notes:* ${notes}\n`;
+  }
+  msg += `\n💰 *Price:* ${price}\n\nThank you!`;
+
+  window.open(`${WA_BASE}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+// ── Filter tabs ────────────────────────────────────────────
 function initFilterTabs(defaultSize) {
   const tabs = document.querySelectorAll(".filter-tab");
   tabs.forEach(tab => {
@@ -210,21 +292,43 @@ function initFilterTabs(defaultSize) {
   });
 }
 
-// ── WhatsApp number injection ─────────────────────────────
+// ── WhatsApp link injection ────────────────────────────────
 function injectWhatsAppLinks() {
-  document.querySelectorAll("[id$='WA'], .btn-whatsapp").forEach(el => {
-    if (el.tagName === "A" && el.href.includes("94XXXXXXXXX")) {
-      el.href = el.href.replace("94XXXXXXXXX", CREAME_CONFIG.whatsappNumber);
-    }
+  document.querySelectorAll("a[href*='94XXXXXXXXX']").forEach(el => {
+    el.href = el.href.replace("94XXXXXXXXX", CREAME_CONFIG.whatsappNumber);
   });
 }
 
-// ── Main loader ───────────────────────────────────────────
+// ── Build toppings grid in modal ───────────────────────────
+function buildToppingsGrid() {
+  const grid = document.getElementById("modalToppings");
+  if (!grid) return;
+  grid.innerHTML = CREAME_CONFIG.toppings.map(t => `
+    <button class="topping-sel" data-name="${t.name}" onclick="toggleTopping(this)">
+      <img src="${t.img}" alt="${t.name}" />
+      <span>${t.name}</span>
+    </button>`).join("");
+}
+
+function toggleTopping(btn) {
+  btn.classList.toggle("selected");
+}
+
+// ── Build toppings section on home page ───────────────────
+function buildHomeToppings() {
+  const grid = document.getElementById("toppingsGrid");
+  if (!grid) return;
+  CREAME_CONFIG.toppings.forEach(t => {
+    grid.innerHTML += `<div class="topping-card"><img src="${t.img}" alt="${t.name}" /><span>${t.name}</span></div>`;
+  });
+}
+
+// ── Main loader ────────────────────────────────────────────
 async function loadCatalogueData(defaultSize = "all") {
-  const loader     = document.getElementById("loader");
-  const errorEl    = document.getElementById("fetchError");
-  const filterBar  = document.getElementById("filterBar");
-  const catalogue  = document.getElementById("catalogue");
+  const loader    = document.getElementById("loader");
+  const errorEl   = document.getElementById("fetchError");
+  const filterBar = document.getElementById("filterBar");
+  const catalogue = document.getElementById("catalogue");
 
   if (loader)    loader.style.display = "flex";
   if (errorEl)   errorEl.style.display = "none";
@@ -234,17 +338,16 @@ async function loadCatalogueData(defaultSize = "all") {
   try {
     const res = await fetch(CREAME_CONFIG.googleSheetCSV);
     if (!res.ok) throw new Error("HTTP " + res.status);
-    const text = await res.text();
-    const rows = parseCSV(text);
+    const rows = parseCSV(await res.text());
     allCakes = buildCakeMap(rows);
 
     if (loader)    loader.style.display = "none";
     if (filterBar) filterBar.style.display = "block";
     if (catalogue) catalogue.style.display = "block";
 
+    buildToppingsGrid();
     initFilterTabs(defaultSize);
     renderCatalogueCards(defaultSize);
-    injectWhatsAppLinks();
   } catch (err) {
     console.error("Failed to load menu:", err);
     if (loader)  loader.style.display = "none";
@@ -252,7 +355,20 @@ async function loadCatalogueData(defaultSize = "all") {
   }
 }
 
-// Inject WhatsApp links on every page
 document.addEventListener("DOMContentLoaded", () => {
   injectWhatsAppLinks();
+  buildHomeToppings();
+
+  // Close modal on backdrop click
+  const modal = document.getElementById("orderModal");
+  if (modal) {
+    modal.addEventListener("click", e => {
+      if (e.target === modal) closeOrderModal();
+    });
+  }
+
+  // Close modal on Escape
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeOrderModal();
+  });
 });
