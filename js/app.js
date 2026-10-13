@@ -118,7 +118,7 @@ function renderCatalogueCards(sizeFilter) {
           <h3 class="cake-name">${cake.name}</h3>
           <p class="cake-desc">${desc}</p>
           ${from ? `<p class="from-price">From <strong>${from}</strong></p>` : ""}
-          <button class="btn-customize" onclick="openOrderModal('${key}')">
+          <button class="btn-customize" onclick="openOrderModal('${key}', '${sizeFilter === 'all' ? '' : sizeFilter}')">
             Customize &amp; Order
           </button>
         </div>
@@ -132,7 +132,7 @@ function renderCatalogueCards(sizeFilter) {
 }
 
 // ── Order Modal ────────────────────────────────────────────
-function openOrderModal(cakeKey) {
+function openOrderModal(cakeKey, preSelectSize) {
   const cake = allCakes[cakeKey];
   if (!cake) return;
 
@@ -145,19 +145,24 @@ function openOrderModal(cakeKey) {
   document.getElementById("modalNotes").value = "";
   document.querySelectorAll(".topping-sel").forEach(t => t.classList.remove("selected"));
 
+  // Determine which size to pre-select
+  const initIdx = preSelectSize
+    ? Math.max(0, sizes.findIndex(([k]) => k === preSelectSize))
+    : 0;
+
   // Size buttons
   const sizeWrap = document.getElementById("modalSizes");
   sizeWrap.innerHTML = sizes.map(([k, s], i) => `
-    <button class="size-opt${i === 0 ? " active" : ""}"
+    <button class="size-opt${i === initIdx ? " active" : ""}"
             data-size-key="${k}" data-label="${s.label}"
             data-no-icing="${s.withoutIcing}" data-with-icing="${s.withIcing}"
             onclick="selectSize(this)">
       ${s.label}
     </button>`).join("");
 
-  // Set initial icing + image from first size
-  updateIcingPanel(sizes[0][1]);
-  updateModalImage(cakeKey, sizes[0][0]);
+  // Set initial icing + image from pre-selected size
+  updateIcingPanel(sizes[initIdx][1]);
+  updateModalImage(cakeKey, sizes[initIdx][0]);
 
   modal.classList.add("open");
   document.body.style.overflow = "hidden";
