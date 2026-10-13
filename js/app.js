@@ -236,7 +236,13 @@ function sendWhatsAppOrder() {
   if (notes)    msg += `📝 *Notes:* ${notes}\n`;
   msg += `\n💰 *Price:* ${price}\n\nThank you!`;
 
-  window.open(`${WA_BASE}?text=${encodeURIComponent(msg)}`, "_blank");
+  const a = document.createElement("a");
+  a.href = `${WA_BASE}?text=${encodeURIComponent(msg)}`;
+  a.target = "_blank";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // ── Filter tabs ────────────────────────────────────────────
