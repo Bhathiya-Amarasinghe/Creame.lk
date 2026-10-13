@@ -228,13 +228,13 @@ function sendWhatsAppOrder() {
   const icing  = icingBtn ? (icingBtn.dataset.icing === "with" ? "With Icing" : "Without Icing") : "—";
   const price  = icingBtn ? icingBtn.dataset.price  : "—";
 
-  let msg = `Hi Creamé! 🎂 I'd like to place an order:\n\n`;
-  msg += `🍰 *Cake:* ${cake.name}\n`;
-  msg += `📦 *Size:* ${size}\n`;
-  msg += `🧁 *Icing:* ${icing}\n`;
-  if (toppings) msg += `🍓 *Toppings:* ${toppings}\n`;
-  if (notes)    msg += `📝 *Notes:* ${notes}\n`;
-  msg += `\n💰 *Price:* ${price}\n\nThank you!`;
+  let msg = `Hi Creame! I'd like to place an order:\n\n`;
+  msg += `*Cake:* ${cake.name}\n`;
+  msg += `*Size:* ${size}\n`;
+  msg += `*Icing:* ${icing}\n`;
+  if (toppings) msg += `*Toppings:* ${toppings}\n`;
+  if (notes)    msg += `*Notes:* ${notes}\n`;
+  msg += `\n*Price:* ${price}\n\nThank you!`;
 
   const a = document.createElement("a");
   a.href = `${WA_BASE}?text=${encodeURIComponent(msg)}`;
