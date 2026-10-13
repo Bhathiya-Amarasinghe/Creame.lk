@@ -89,6 +89,7 @@ function buildCakeMapFromCSV(rows) {
 // ── Catalogue rendering ────────────────────────────────────
 let allCakes = {};
 let activeSize = "all";
+let searchQuery = "";
 
 function renderCatalogueCards(sizeFilter) {
   const grid = document.getElementById("catalogueGrid");
@@ -97,6 +98,7 @@ function renderCatalogueCards(sizeFilter) {
   let count = 0;
 
   for (const [key, cake] of Object.entries(allCakes)) {
+    if (searchQuery && !cake.name.toLowerCase().includes(searchQuery)) continue;
     const sizesToShow = sizeFilter === "all"
       ? Object.entries(cake.sizes)
       : Object.entries(cake.sizes).filter(([k]) => k === sizeFilter);
@@ -143,6 +145,13 @@ function openOrderModal(cakeKey, preSelectSize) {
   document.getElementById("modalCakeName").textContent = cake.name;
   document.getElementById("modalCakeDesc").textContent = getDescription(cake.name);
   document.getElementById("modalNotes").value = "";
+  document.getElementById("modalInscription").value = "";
+  document.getElementById("modalQty").textContent = "1";
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 2);
+  const dateInput = document.getElementById("modalDate");
+  dateInput.value = "";
+  dateInput.min = minDate.toISOString().split("T")[0];
   document.querySelectorAll(".topping-sel").forEach(t => t.classList.remove("selected"));
 
   // Determine which size to pre-select
@@ -209,6 +218,11 @@ function selectIcing(btn) {
   btn.classList.add("active");
 }
 
+function changeQty(delta) {
+  const el = document.getElementById("modalQty");
+  el.textContent = Math.max(1, parseInt(el.textContent) + delta);
+}
+
 function closeOrderModal() {
   document.getElementById("orderModal").classList.remove("open");
   document.body.style.overflow = "";
@@ -219,7 +233,10 @@ function sendWhatsAppOrder() {
   const cake     = allCakes[cakeKey];
   const sizeBtn  = document.querySelector(".size-opt.active");
   const icingBtn = document.querySelector(".icing-opt.active");
-  const notes    = document.getElementById("modalNotes").value.trim();
+  const notes       = document.getElementById("modalNotes").value.trim();
+  const inscription = document.getElementById("modalInscription").value.trim();
+  const qty         = parseInt(document.getElementById("modalQty").textContent) || 1;
+  const dateVal     = document.getElementById("modalDate").value;
 
   const toppings = [...document.querySelectorAll(".topping-sel.selected")]
     .map(t => t.dataset.name).join(", ");
@@ -228,13 +245,22 @@ function sendWhatsAppOrder() {
   const icing  = icingBtn ? (icingBtn.dataset.icing === "with" ? "With Icing" : "Without Icing") : "—";
   const price  = icingBtn ? icingBtn.dataset.price  : "—";
 
+  let dateStr = "";
+  if (dateVal) {
+    const d = new Date(dateVal + "T00:00:00");
+    dateStr = d.toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  }
+
   let msg = `Hi Creame! I'd like to place an order:\n\n`;
   msg += `*Cake:* ${cake.name}\n`;
   msg += `*Size:* ${size}\n`;
+  if (qty > 1)       msg += `*Quantity:* ${qty}\n`;
   msg += `*Icing:* ${icing}\n`;
-  if (toppings) msg += `*Toppings:* ${toppings}\n`;
-  if (notes)    msg += `*Notes:* ${notes}\n`;
-  msg += `\n*Price:* ${price}\n\nThank you!`;
+  if (toppings)      msg += `*Toppings:* ${toppings}\n`;
+  if (inscription)   msg += `*Inscription:* ${inscription}\n`;
+  if (dateStr)       msg += `*Delivery Date:* ${dateStr}\n`;
+  if (notes)         msg += `*Notes:* ${notes}\n`;
+  msg += `\n*Price:* ${price}${qty > 1 ? " x " + qty : ""}\n\nThank you!`;
 
   const a = document.createElement("a");
   a.href = `${WA_BASE}?text=${encodeURIComponent(msg)}`;
@@ -243,6 +269,11 @@ function sendWhatsAppOrder() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function filterBySearch(query) {
+  searchQuery = query.trim().toLowerCase();
+  renderCatalogueCards(activeSize);
 }
 
 // ── Filter tabs ────────────────────────────────────────────

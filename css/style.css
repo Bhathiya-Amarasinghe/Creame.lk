@@ -789,6 +789,87 @@ em { color: var(--rose-mid); font-style: italic; }
 .cta-text h2 { color: var(--choco); margin-bottom: .5rem; }
 .cta-text p  { color: var(--gray); max-width: 480px; }
 
+/* ── Search input ────────────────────────────────────────── */
+.cake-search {
+  margin-left: auto;
+  border: 1.5px solid var(--blush);
+  border-radius: 50px;
+  padding: .4rem 1.1rem;
+  font-size: .83rem;
+  font-family: var(--ff-sans);
+  color: var(--choco);
+  background: var(--cream);
+  outline: none;
+  width: 200px;
+  transition: border-color var(--transition);
+}
+.cake-search:focus { border-color: var(--rose); }
+
+/* ── Modal input (inscription / date) ───────────────────── */
+.modal-input {
+  width: 100%;
+  padding: .7rem .9rem;
+  border: 1.5px solid var(--blush);
+  border-radius: var(--radius-sm);
+  font-family: var(--ff-sans);
+  font-size: .88rem;
+  color: var(--choco);
+  background: var(--cream);
+  outline: none;
+  transition: border-color var(--transition);
+}
+.modal-input:focus { border-color: var(--rose); }
+
+/* ── Quantity selector ───────────────────────────────────── */
+.qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--blush);
+  background: var(--cream);
+  color: var(--choco);
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  font-family: var(--ff-sans);
+  line-height: 1;
+}
+.qty-btn:hover { border-color: var(--rose); color: var(--rose); background: var(--blush); }
+.qty-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--choco);
+  min-width: 28px;
+  text-align: center;
+}
+
+/* ── Floating WhatsApp button ────────────────────────────── */
+.wa-float {
+  position: fixed;
+  bottom: 1.6rem;
+  right: 1.6rem;
+  width: 58px;
+  height: 58px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  z-index: 500;
+  transition: transform var(--transition), filter var(--transition);
+}
+.wa-float:hover { transform: scale(1.1); filter: brightness(1.1); }
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 900px) {
   .hero          { grid-template-columns: 1fr; min-height: auto; text-align: center; }
