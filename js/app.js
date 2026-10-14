@@ -23,6 +23,10 @@ function getDescription(cakeName) {
     || "A delicious handcrafted cake made fresh to order.";
 }
 
+function hasPrice(s) {
+  return (s.withoutIcing && s.withoutIcing !== "-") || (s.withIcing && s.withIcing !== "-");
+}
+
 function lowestPrice(cake) {
   for (const s of Object.values(cake.sizes)) {
     const p = (s.withoutIcing && s.withoutIcing !== "-") ? s.withoutIcing : s.withIcing;
@@ -99,9 +103,12 @@ function renderCatalogueCards(sizeFilter) {
 
   for (const [key, cake] of Object.entries(allCakes)) {
     if (searchQuery && !cake.name.toLowerCase().includes(searchQuery)) continue;
-    const sizesToShow = sizeFilter === "all"
+    const sizesToShow = (sizeFilter === "all"
       ? Object.entries(cake.sizes)
-      : Object.entries(cake.sizes).filter(([k]) => k === sizeFilter);
+      : sizeFilter === "slice"
+        ? Object.entries(cake.sizes).filter(([k]) => k === "quarter" || k === "piece")
+        : Object.entries(cake.sizes).filter(([k]) => k === sizeFilter)
+    ).filter(([, s]) => hasPrice(s));
     if (sizesToShow.length === 0) continue;
 
     // Pick image matching the active filter
@@ -139,7 +146,7 @@ function openOrderModal(cakeKey, preSelectSize) {
   if (!cake) return;
 
   const modal     = document.getElementById("orderModal");
-  const sizes     = Object.entries(cake.sizes);
+  const sizes     = Object.entries(cake.sizes).filter(([, s]) => hasPrice(s));
 
   modal.dataset.cakeKey = cakeKey;
   document.getElementById("modalCakeName").textContent = cake.name;
@@ -278,6 +285,7 @@ function filterBySearch(query) {
 
 // ── Filter tabs ────────────────────────────────────────────
 function initFilterTabs(defaultSize) {
+  activeSize = defaultSize;
   const tabs = document.querySelectorAll(".filter-tab");
   tabs.forEach(tab => {
     if (tab.dataset.size === defaultSize) {

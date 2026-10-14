@@ -419,6 +419,9 @@ em { color: var(--rose-mid); font-style: italic; }
 .footer-links a     { display: block; margin-bottom: .5rem; font-size: .88rem; transition: color var(--transition); }
 .footer-links a:hover { color: var(--blush); }
 .footer-contact p   { font-size: .88rem; margin-bottom: 1rem; }
+.footer-social      { display: flex; flex-direction: column; gap: .55rem; margin-top: 1rem; }
+.footer-social a    { display: flex; align-items: center; gap: .5rem; font-size: .88rem; color: rgba(255,255,255,.75); transition: color var(--transition); }
+.footer-social a:hover { color: var(--blush); }
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,.1);
   text-align: center;
