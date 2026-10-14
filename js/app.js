@@ -115,7 +115,13 @@ function renderCatalogueCards(sizeFilter) {
     const imgSizeKey = sizeFilter === "all" ? "all" : sizesToShow[0][0];
     const img  = getImage(cake.name, imgSizeKey);
     const desc = getDescription(cake.name);
-    const from = lowestPrice(cake);
+    const from = (() => {
+      for (const [, s] of sizesToShow) {
+        const p = (s.withoutIcing && s.withoutIcing !== "-") ? s.withoutIcing : s.withIcing;
+        if (p && p !== "-") return p;
+      }
+      return null;
+    })();
 
     grid.innerHTML += `
       <div class="cake-card">
