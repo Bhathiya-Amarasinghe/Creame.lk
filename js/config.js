@@ -6,7 +6,7 @@ const CREAME_CONFIG = {
 
   whatsappNumber: "94773174645",
 
-  googleSheetCSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmuawVywltiTKT7A66WxRDtJIhl1WfW23OG32DYCBzLDjUhQv-tTj-4YRZaziZVhLm9uNoTa5NPNEi/pub?output=csv",
+  googleSheetCSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMHLDWEjmwMa4-aZbZ0QZNYz6FlsWaNyCauhWJajYCw7WzpXtN-C7LnpuwMa0knwoNNRAxGsfwqDAY/pub?output=csv",
 
   // Per-size images for each cake.
   // Keys: default (1kg/500g), bento, mini, cupcake, slice

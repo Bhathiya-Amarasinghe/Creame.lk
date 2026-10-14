@@ -65,7 +65,7 @@ function buildCakeMapFromCSV(rows) {
       if (cell.includes("bento cake prices"))  blocks["bento"]   = { c, r: r + 2 };
       if (cell.includes("mini cake prices"))   blocks["mini"]    = { c, r: r + 2 };
       if (cell.includes("cupcake prices"))     blocks["cupcake"] = { c, r: r + 2 };
-      if (cell.includes("cake pieces prices")) blocks["slice"]   = { c, r: r + 2 };
+      if (cell.includes("cake pieces prices")) blocks["slice"]   = { c, r: r + 3 };
     }
   }
   const sizeLabels = {
@@ -357,6 +357,16 @@ async function loadCatalogueData(defaultSize = "all") {
         const rows = parseCSV(await res.text());
         const liveCakes = buildCakeMapFromCSV(rows);
         if (Object.keys(liveCakes).length > 0) {
+          // Merge: fill any sizes missing from live data using hardcoded fallback
+          for (const [key, cake] of Object.entries(CAKE_DATA)) {
+            if (liveCakes[key]) {
+              for (const [sizeKey, sizeData] of Object.entries(cake.sizes)) {
+                if (!liveCakes[key].sizes[sizeKey]) {
+                  liveCakes[key].sizes[sizeKey] = sizeData;
+                }
+              }
+            }
+          }
           allCakes = liveCakes;
           renderCatalogueCards(activeSize || defaultSize);
         }
