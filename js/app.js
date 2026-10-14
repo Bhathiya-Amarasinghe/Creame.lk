@@ -352,7 +352,7 @@ async function loadCatalogueData(defaultSize = "all") {
   const url = CREAME_CONFIG.googleSheetCSV;
   if (url && !url.includes("YOUR_SHEET_ID")) {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url + "&t=" + Date.now());
       if (res.ok) {
         const rows = parseCSV(await res.text());
         const liveCakes = buildCakeMapFromCSV(rows);
