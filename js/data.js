@@ -7,7 +7,7 @@ const CAKE_DATA = {
   "butter cake (normal cake)": {
     name: "Butter Cake (Normal Cake)",
     sizes: {
-      "1kg":     { label: "1 kg",          withoutIcing: "LKR 2,300",   withIcing: "LKR 2,850" },
+      "1kg":     { label: "1 kg",          withoutIcing: "LKR 4,800",   withIcing: "LKR 2,850" },
       "500g":    { label: "500 g",          withoutIcing: "LKR 2,000",   withIcing: "LKR 2,750" },
       "bento":   { label: "Bento",          withoutIcing: "LKR 1,950",   withIcing: "LKR 2,500" },
       "mini":    { label: "Mini",           withoutIcing: "LKR 500",     withIcing: "LKR 570" },
