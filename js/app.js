@@ -152,7 +152,12 @@ function openOrderModal(cakeKey, preSelectSize) {
   if (!cake) return;
 
   const modal     = document.getElementById("orderModal");
-  const sizes     = Object.entries(cake.sizes).filter(([, s]) => hasPrice(s));
+  const sizes = Object.entries(cake.sizes).filter(([k, s]) => {
+    if (!hasPrice(s)) return false;
+    if (!preSelectSize) return true;
+    if (preSelectSize === 'slice') return k === 'quarter' || k === 'piece';
+    return k === preSelectSize;
+  });
 
   modal.dataset.cakeKey = cakeKey;
   document.getElementById("modalCakeName").textContent = cake.name;
