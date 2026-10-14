@@ -276,7 +276,7 @@ function sendWhatsAppOrder() {
   if (qty > 1)       msg += `*Quantity:* ${qty}\n`;
   msg += `*Icing:* ${icing}\n`;
   if (toppings)      msg += `*Toppings:* ${toppings}\n`;
-  if (inscription)   msg += `*Inscription:* ${inscription}\n`;
+  if (inscription)   msg += `*Personalized Icing Wording:* ${inscription}\n`;
   if (dateStr)       msg += `*Delivery Date:* ${dateStr}\n`;
   if (notes)         msg += `*Notes:* ${notes}\n`;
   msg += `\n*Price:* ${price}${qty > 1 ? " x " + qty : ""}\n\nThank you!`;
