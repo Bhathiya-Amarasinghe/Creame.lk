@@ -689,6 +689,16 @@ em { color: var(--rose-mid); font-style: italic; }
 .icing-label { display: block; font-size: .82rem; font-weight: 600; color: var(--choco); }
 .icing-price { display: block; font-size: .95rem; font-weight: 700; color: var(--rose); margin-top: .2rem; }
 
+/* Receiving method */
+.receiving-opts { display: flex; gap: .7rem; }
+.receiving-opt {
+  flex: 1; padding: .55rem 1rem; border: 2px solid var(--border);
+  border-radius: 8px; background: var(--white); font-size: .9rem;
+  font-weight: 600; color: var(--choco); cursor: pointer; transition: all .2s;
+}
+.receiving-opt:hover  { border-color: var(--rose-light); color: var(--rose); }
+.receiving-opt.active { background: var(--rose); border-color: var(--rose); color: var(--white); }
+
 /* Toppings multi-select */
 .modal-toppings {
   display: grid;

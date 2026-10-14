@@ -165,7 +165,15 @@
         </div>
 
         <div class="modal-section">
-          <h4>Delivery Date</h4>
+          <h4>Receiving Method</h4>
+          <div class="receiving-opts">
+            <button class="receiving-opt active" data-method="Pickup" onclick="selectReceiving(this)">Pickup</button>
+            <button class="receiving-opt" data-method="Delivery" onclick="selectReceiving(this)">Delivery</button>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h4>Expected Date</h4>
           <input type="date" id="modalDate" class="modal-input" />
         </div>
 

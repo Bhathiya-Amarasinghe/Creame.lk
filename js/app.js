@@ -166,6 +166,7 @@ function openOrderModal(cakeKey, preSelectSize) {
   dateInput.value = "";
   dateInput.min = minDate.toISOString().split("T")[0];
   document.querySelectorAll(".topping-sel").forEach(t => t.classList.remove("selected"));
+  document.querySelectorAll(".receiving-opt").forEach((b, i) => b.classList.toggle("active", i === 0));
 
   // Determine which size to pre-select
   let initIdx = 0;
@@ -237,6 +238,11 @@ function selectIcing(btn) {
   btn.classList.add("active");
 }
 
+function selectReceiving(btn) {
+  document.querySelectorAll(".receiving-opt").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
 function changeQty(delta) {
   const el = document.getElementById("modalQty");
   el.textContent = Math.max(1, parseInt(el.textContent) + delta);
@@ -252,6 +258,7 @@ function sendWhatsAppOrder() {
   const cake     = allCakes[cakeKey];
   const sizeBtn  = document.querySelector(".size-opt.active");
   const icingBtn = document.querySelector(".icing-opt.active");
+  const receivingBtn = document.querySelector(".receiving-opt.active");
   const notes       = document.getElementById("modalNotes").value.trim();
   const inscription = document.getElementById("modalInscription").value.trim();
   const qty         = parseInt(document.getElementById("modalQty").textContent) || 1;
@@ -260,9 +267,10 @@ function sendWhatsAppOrder() {
   const toppings = [...document.querySelectorAll(".topping-sel.selected")]
     .map(t => t.dataset.name).join(", ");
 
-  const size   = sizeBtn  ? sizeBtn.dataset.label  : "—";
-  const icing  = icingBtn ? (icingBtn.dataset.icing === "with" ? "With Icing" : "Without Icing") : "—";
-  const price  = icingBtn ? icingBtn.dataset.price  : "—";
+  const size      = sizeBtn      ? sizeBtn.dataset.label          : "—";
+  const icing     = icingBtn     ? (icingBtn.dataset.icing === "with" ? "With Icing" : "Without Icing") : "—";
+  const price     = icingBtn     ? icingBtn.dataset.price          : "—";
+  const receiving = receivingBtn ? receivingBtn.dataset.method     : "—";
 
   let dateStr = "";
   if (dateVal) {
@@ -277,7 +285,8 @@ function sendWhatsAppOrder() {
   msg += `*Icing:* ${icing}\n`;
   if (toppings)      msg += `*Toppings:* ${toppings}\n`;
   if (inscription)   msg += `*Personalized Icing Wording:* ${inscription}\n`;
-  if (dateStr)       msg += `*Delivery Date:* ${dateStr}\n`;
+  msg += `*Receiving Method:* ${receiving}\n`;
+  if (dateStr)       msg += `*Expected Date:* ${dateStr}\n`;
   if (notes)         msg += `*Notes:* ${notes}\n`;
   msg += `\n*Price:* ${price}${qty > 1 ? " x " + qty : ""}\n\nThank you!`;
 
