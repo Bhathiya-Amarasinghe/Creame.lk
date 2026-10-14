@@ -162,9 +162,15 @@ function openOrderModal(cakeKey, preSelectSize) {
   document.querySelectorAll(".topping-sel").forEach(t => t.classList.remove("selected"));
 
   // Determine which size to pre-select
-  const initIdx = preSelectSize
-    ? Math.max(0, sizes.findIndex(([k]) => k === preSelectSize))
-    : 0;
+  let initIdx = 0;
+  if (preSelectSize) {
+    if (preSelectSize === 'slice') {
+      const qi = sizes.findIndex(([k]) => k === 'quarter');
+      initIdx = Math.max(0, qi !== -1 ? qi : sizes.findIndex(([k]) => k === 'piece'));
+    } else {
+      initIdx = Math.max(0, sizes.findIndex(([k]) => k === preSelectSize));
+    }
+  }
 
   // Size buttons
   const sizeWrap = document.getElementById("modalSizes");
