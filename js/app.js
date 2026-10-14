@@ -304,7 +304,6 @@ function initFilterTabs(defaultSize) {
 // ── Toppings ───────────────────────────────────────────────
 const TOPPING_IMGS = {
   "whipped cream": "images/Toppings/Whipped cream.jpg",
-  "vanilla":       "images/Toppings/Whipped cream.jpg",
   "nutella":       "images/Toppings/Nutella.jpg",
   "oreo":          "images/Toppings/Oreo.jpg",
   "mixed fruit":   "images/Toppings/Mixed fruit.jpg",

@@ -100,7 +100,6 @@ const CREAME_CONFIG = {
   },
 
   toppings: [
-    { name: "Vanilla",      img: "images/Toppings/Whipped cream.jpg" },
     { name: "Nutella",      img: "images/Toppings/Nutella.jpg" },
     { name: "Oreo",         img: "images/Toppings/Oreo.jpg" },
     { name: "Mixed Fruit",  img: "images/Toppings/Mixed fruit.jpg" },
