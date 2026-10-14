@@ -302,6 +302,38 @@ function initFilterTabs(defaultSize) {
 }
 
 // ── Toppings ───────────────────────────────────────────────
+const TOPPING_IMGS = {
+  "whipped cream": "images/Toppings/Whipped cream.jpg",
+  "vanilla":       "images/Toppings/Whipped cream.jpg",
+  "nutella":       "images/Toppings/Nutella.jpg",
+  "oreo":          "images/Toppings/Oreo.jpg",
+  "mixed fruit":   "images/Toppings/Mixed fruit.jpg",
+  "green grapes":  "images/Toppings/Green grapes.jpg",
+  "pineapple":     "images/Toppings/Pineapple.jpg",
+  "coconut":       "images/Toppings/Coconut.jpg",
+  "blueberry":     "images/Toppings/Blueberries.jpg",
+  "blueberries":   "images/Toppings/Blueberries.jpg",
+  "cherry":        "images/Toppings/Cherries.jpg",
+  "cherries":      "images/Toppings/Cherries.jpg",
+  "strawberry":    "images/Toppings/Strawberries.jpg",
+  "strawberries":  "images/Toppings/Strawberries.jpg",
+  "nuts":          "images/Toppings/Nuts.jpg",
+};
+
+function buildToppingsFromCSV(rows) {
+  for (const row of rows) {
+    const cell = (row[0] || "").trim();
+    if (cell.toLowerCase().startsWith("toppings:")) {
+      return cell.replace(/^toppings:\s*/i, "")
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean)
+        .map(name => ({ name, img: TOPPING_IMGS[name.toLowerCase()] || `images/Toppings/${name}.jpg` }));
+    }
+  }
+  return null;
+}
+
 function buildToppingsGrid() {
   const grid = document.getElementById("modalToppings");
   if (!grid) return;
@@ -317,9 +349,9 @@ function toggleTopping(btn) { btn.classList.toggle("selected"); }
 function buildHomeToppings() {
   const grid = document.getElementById("toppingsGrid");
   if (!grid) return;
-  CREAME_CONFIG.toppings.forEach(t => {
-    grid.innerHTML += `<div class="topping-card"><img src="${t.img}" alt="${t.name}" /><span>${t.name}</span></div>`;
-  });
+  grid.innerHTML = CREAME_CONFIG.toppings.map(t =>
+    `<div class="topping-card"><img src="${t.img}" alt="${t.name}" /><span>${t.name}</span></div>`
+  ).join("");
 }
 
 // ── WhatsApp link injection ────────────────────────────────
@@ -370,6 +402,11 @@ async function loadCatalogueData(defaultSize = "all") {
           allCakes = liveCakes;
           renderCatalogueCards(activeSize || defaultSize);
         }
+        const liveToppings = buildToppingsFromCSV(rows);
+        if (liveToppings && liveToppings.length > 0) {
+          CREAME_CONFIG.toppings = liveToppings;
+          buildToppingsGrid();
+        }
       }
     } catch (_) {
       // Silent fail — hardcoded data already displayed
@@ -380,6 +417,24 @@ async function loadCatalogueData(defaultSize = "all") {
 document.addEventListener("DOMContentLoaded", () => {
   injectWhatsAppLinks();
   buildHomeToppings();
+
+  // Live toppings update for home page
+  if (document.getElementById("toppingsGrid")) {
+    const url = CREAME_CONFIG.googleSheetCSV;
+    if (url && !url.includes("YOUR_SHEET_ID")) {
+      fetch(url + "&t=" + Date.now(), { cache: "no-store" })
+        .then(r => r.ok ? r.text() : null)
+        .then(text => {
+          if (!text) return;
+          const liveToppings = buildToppingsFromCSV(parseCSV(text));
+          if (liveToppings && liveToppings.length > 0) {
+            CREAME_CONFIG.toppings = liveToppings;
+            buildHomeToppings();
+          }
+        })
+        .catch(() => {});
+    }
+  }
 
   const modal = document.getElementById("orderModal");
   if (modal) {
